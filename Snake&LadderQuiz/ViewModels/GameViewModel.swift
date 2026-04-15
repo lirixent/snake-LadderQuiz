@@ -223,7 +223,10 @@ class GameViewModel: ObservableObject {
     func moveCurrentPlayer(steps: Int) {
         guard !isMoving else { return }
 
-        if currentPlayer.position + steps >= 63 {
+        if min(currentPlayer.position + steps, 63) == 63 
+        
+        
+        {
             currentPlayer.position = 63
             players[0] = currentPlayer
 
@@ -404,30 +407,23 @@ class GameViewModel: ObservableObject {
     
     
     private func prepareNextRound() {
-        // final round = 20 seconds
-        if universalTimer <= 20 {
+        if currentRound >= 6 {
             gameMessage = "🏆 CHAMPION! Restarting Time Chase"
-            universalTimer = 300
-            currentRound = 1
-        } else if universalTimer <= 60 {
-            universalTimer = max(20, universalTimer - 40)
-            currentRound += 1
-        } else {
-            universalTimer -= 60
-            currentRound += 1
+            resetToRoundOne()
+            return
         }
 
-        // reset board position
+        currentRound += 1
+        universalTimer = timerForRound(currentRound)
+
         currentPlayer.position = 1
         players[0] = currentPlayer
 
-        // reshuffle questions for new round
         currentQuestionIndex = 0
         questions.shuffle()
 
         gameMessage = "🎮 Round \(currentRound) Started"
     }
-    
     
     
    /*

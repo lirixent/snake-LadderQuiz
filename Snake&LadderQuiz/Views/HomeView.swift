@@ -47,7 +47,10 @@ struct HomeView: View {
     @State private var isLoadingCharacters = false
     
     @State private var isLoadingGame = false
+ 
     
+    @State private var showWebGame = false
+    @State private var roomID: String = ""
     
     private let baseURL = "https://boardgames-2369.onrender.com/api/questions"
     
@@ -102,7 +105,13 @@ struct HomeView: View {
                     
                    // (perform: loadCategories)
                     loadCategories()
-                        socketService.connect()
+                       
+              /*  socketService.connect(
+                        playerName: username,
+                        avatar: selectedAvatar
+                    )*/
+                    
+                    
                 }
                 
                 // MARK: - Character Picker
@@ -122,7 +131,7 @@ struct HomeView: View {
                     }
                 }
                 .padding(.horizontal)
-                .onChange(of: selectedCategory) {
+                .onChange(of: selectedCategory){ _ in
                     loadCharacters()
                 }
                 
