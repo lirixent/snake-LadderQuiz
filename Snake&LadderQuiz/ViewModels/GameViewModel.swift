@@ -223,7 +223,7 @@ class GameViewModel: ObservableObject {
     func moveCurrentPlayer(steps: Int) {
         guard !isMoving else { return }
 
-        if min(currentPlayer.position + steps, 63) == 63 
+        /*if min(currentPlayer.position + steps, 63) == 63
         
         
         {
@@ -241,7 +241,7 @@ class GameViewModel: ObservableObject {
             showRoundAlert = true
 
             return
-        }
+        }*/
 
         isMoving = true
         moveStepsRemaining = steps
@@ -329,10 +329,14 @@ class GameViewModel: ObservableObject {
             currentQuestionIndex += 1
             startQuestionTimer()
         } else {
-            endRound()
+           // endRound()
+            prepareNextRound()
+
         }
     }
     
+   
+    /*
     // MARK: - Round Management
     private func endRound() {
         stopUniversalTimer()
@@ -347,6 +351,8 @@ class GameViewModel: ObservableObject {
         roundMessage = "🎉 Win Round \(currentRound)"
         showRoundAlert = true
     }
+    */
+    
     
     
     func proceedToNextRound() {
@@ -376,7 +382,37 @@ class GameViewModel: ObservableObject {
         startUniversalTimer()
     }
     
+   
     
+    
+    func resetToRoundOne() {
+        stopUniversalTimer()
+        stopQuestionTimer()
+
+        currentRound = 1
+        universalTimer = timerForRound(1)
+
+        currentPlayer.position = 1
+        players[0] = currentPlayer
+
+        currentQuestionIndex = 0
+        questions.shuffle()
+
+        isChampion = false
+        gameMessage = "🔥 Round 1"
+
+        startUniversalTimer()
+        startQuestionTimer()
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    /*
     func resetToRoundOne() {
         currentRound = 1
         universalTimer = 300
@@ -386,9 +422,9 @@ class GameViewModel: ObservableObject {
         gameMessage = "🔥 Round 1"
         startUniversalTimer()
     }
+    */
     
-    
-    
+    /*
     private func checkRoundCompletion() {
         if currentPlayer.position >= 63 {
             currentPlayer.position = 63
@@ -404,8 +440,36 @@ class GameViewModel: ObservableObject {
             }
         }
     }
+    */
+    
+    private func checkRoundCompletion() {
+        guard currentPlayer.position >= 63 else { return }
+
+        currentPlayer.position = 63
+        players[0] = currentPlayer
+
+        GameSoundManager.shared.playSound("success")
+
+        gameMessage = "🎉 Round \(currentRound) Won!"
+
+        stopUniversalTimer()
+        stopQuestionTimer()
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            self.prepareNextRound()
+        }
+    }
     
     
+    
+    
+    
+    
+    
+    
+    
+    
+    /*
     private func prepareNextRound() {
         if currentRound >= 6 {
             gameMessage = "🏆 CHAMPION! Restarting Time Chase"
@@ -424,6 +488,49 @@ class GameViewModel: ObservableObject {
 
         gameMessage = "🎮 Round \(currentRound) Started"
     }
+    */
+    
+    
+    private func prepareNextRound() {
+        if currentRound >= 6 {
+            gameMessage = "🏆 CHAMPION! Restarting Time Chase"
+            resetToRoundOne()
+            return
+        }
+
+        currentRound += 1
+
+        currentPlayer.position = 1
+        players[0] = currentPlayer
+
+        currentQuestionIndex = 0
+        questions.shuffle()
+
+        universalTimer = timerForRound(currentRound)
+
+        gameMessage = "🔥 Round \(currentRound)"
+        startUniversalTimer()
+        startQuestionTimer()
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
    /*

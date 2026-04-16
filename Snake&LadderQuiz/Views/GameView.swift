@@ -3,6 +3,9 @@ import SwiftUI
 struct GameView: View {
     @ObservedObject var viewModel: GameViewModel
     
+        
+    
+    
     var body: some View {
         ZStack(alignment: .top) {
 /*
@@ -25,6 +28,13 @@ struct GameView: View {
                 ///    .foregroundColor(.red)
                 //    .padding(.top)
 
+                
+                
+                
+                
+                
+                
+                
 
                 // MARK: - Game Message (DYNAMIC)
                 Text(viewModel.gameMessage)
@@ -139,6 +149,22 @@ struct GameView: View {
                 }
             }
         }
+        
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button {
+                    viewModel.resetToRoundOne()
+                } label: {
+                    Text("Exit")
+                        .foregroundColor(.red)
+                }
+            }
+        }
+        
+        
+        
+        
+        
         
         // MARK: - Timers
         

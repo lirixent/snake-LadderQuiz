@@ -1,10 +1,3 @@
-//
-//  SocketService.swift
-//  Snake&LadderQuiz
-//
-//  Created by Olanrewaju.Durojaiye.a1 on 2026-04-08.
-//
-
 import Foundation
 import SocketIO
 import Combine
@@ -15,13 +8,15 @@ class SocketService: ObservableObject {
     private var manager: SocketManager
     private var socket: SocketIOClient
 
-    
     private var pendingPlayerName: String?
     private var pendingAvatar: String?
-    
+    private var pendingCategory: String?
+
     @Published var roomPlayers: [Player] = []
-    
+    @Published var assignedRoomID: String = ""
+
     var onGameStarted: (() -> Void)?
+    var onRoomAssigned: ((String) -> Void)?
 
     private init() {
         manager = SocketManager(
@@ -36,9 +31,11 @@ class SocketService: ObservableObject {
         setupHandlers()
     }
 
-    func connect(playerName: String, avatar: String) {
+    // MARK: - CONNECT
+    func connect(playerName: String, avatar: String, category: String) {
         pendingPlayerName = playerName
         pendingAvatar = avatar
+        pendingCategory = category
 
         if socket.status == .connected || socket.status == .connecting {
             print("⚠️ Socket already connected/connecting")
@@ -47,77 +44,88 @@ class SocketService: ObservableObject {
 
         socket.connect()
     }
-    
-    
+
     func disconnect() {
         socket.disconnect()
     }
 
+    // MARK: - SOCKET HANDLERS
     private func setupHandlers() {
-        
-        
+
         socket.on(clientEvent: .connect) { [weak self] _, _ in
             guard let self = self else { return }
-            
+
             print("✅ Socket connected successfully")
-            
+
             if let name = self.pendingPlayerName,
-               let avatar = self.pendingAvatar {
-                self.joinLobby(playerName: name, avatar: avatar)
+               let avatar = self.pendingAvatar,
+               let category = self.pendingCategory {
+                self.joinLobby(
+                    playerName: name,
+                    avatar: avatar,
+                    category: category
+                )
             }
-            
         }
-        
-        
-        socket.on("sessionUpdate") { [weak self] data, _ in
+
+        socket.on("assignedRoom") { [weak self] data, _ in
+            guard let self = self,
+                  let roomData = data.first as? [String: Any],
+                  let roomID = roomData["roomID"] as? String else { return }
+
+            DispatchQueue.main.async {
+                self.assignedRoomID = roomID
+                self.onRoomAssigned?(roomID)
+                print("🏠 Assigned room: \(roomID)")
+            }
+        }
+
+        socket.on("roomPlayers") { [weak self] data, _ in
             guard let self = self,
                   let playersData = data.first as? [[String: Any]] else { return }
-            
+
             DispatchQueue.main.async {
-                
                 self.roomPlayers = playersData.map { item in
                     let name = item["name"] as? String ?? "Unknown"
-                    let avatar = item["avatar"] as? String ?? "avartar1"
-                    let isSpectator = item["isSpectator"] as? Bool ?? false
-                    
+                    let avatar = item["avatar"] as? String ?? "avartar1.png"
+
                     return Player(
                         name: name,
                         avatar: avatar,
-                        isSpectator: isSpectator
+                        isSpectator: false
                     )
                 }
-                
-                print("👥 Session updated: \(self.roomPlayers.count)")
+
+                print("👥 Room players updated: \(self.roomPlayers.count)")
             }
         }
-        
-        
-        socket.on("gameStarted") { [weak self] data, _ in
-            print("🎮 Server started the game automatically")
-            self?.onGameStarted?()
+
+        socket.on("gameStarted") { [weak self] _, _ in
+            DispatchQueue.main.async {
+                print("🎮 Server started game")
+                self?.onGameStarted?()
+            }
         }
-        
-        
     }
- 
-       
-        
-        
-        
-    func joinLobby(playerName: String, avatar: String) {
-        socket.emit("joinLobby", [
+
+    // MARK: - JOIN LOBBY
+    func joinLobby(playerName: String, avatar: String, category: String) {
+        socket.emit("joinRoom", [
             "playerName": playerName,
-            "avatar": avatar
+            "avatar": avatar,
+            "category": category
         ])
 
-        print("🚪 Joined lobby as \(playerName)")
+        print("🚪 Joined \(category) lobby as \(playerName)")
     }
 
-    func leaveRoom(playerName: String) {
-        socket.emit("leaveLobby", [
-            "playerName": playerName
+    // MARK: - LEAVE ROOM
+    func leaveRoom(roomID: String, category: String) {
+        socket.emit("leaveRoom", [
+            "roomID": roomID,
+            "category": category
         ])
 
-        print("🚪 \(playerName) left lobby")
+        print("🚪 Left room \(roomID)")
     }
 }

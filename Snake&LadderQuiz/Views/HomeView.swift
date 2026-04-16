@@ -218,7 +218,10 @@ struct HomeView: View {
             
             
             .sheet(isPresented: $showLobbyView) {
-                LobbyView(player: viewModel.currentPlayer)
+                LobbyView(
+                    player: viewModel.currentPlayer,
+                    selectedCategory: selectedCategory
+                )
             }
 
             .sheet(isPresented: $showQRJoinView) {
